@@ -81,7 +81,7 @@ export default function Admin() {
           <CardContent>
             <div className="flex gap-2 mb-6 p-4 bg-muted/30 rounded-lg border">
               <Input 
-                placeholder="رقم المستخدم (User ID)" 
+                placeholder="رقم المستخدم" 
                 value={newBrokerUserId}
                 onChange={e => setNewBrokerUserId(e.target.value)}
                 type="number"
@@ -118,7 +118,14 @@ export default function Admin() {
                 <div key={t.id} className="flex flex-col p-4 border rounded-lg hover:bg-muted/20">
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-bold text-sm line-clamp-1">{t.title}</p>
-                    <Badge variant="outline">{t.status}</Badge>
+                    <Badge variant="outline">
+                      {t.status === "pending" && "قيد الانتظار"}
+                      {t.status === "active" && "نشطة"}
+                      {t.status === "paid" && "تم الدفع"}
+                      {t.status === "completed" && "مكتملة"}
+                      {t.status === "closed" && "مغلقة"}
+                      {t.status === "cancelled" && "ملغية"}
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
                     <span>{t.amount} ريال</span>

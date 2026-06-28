@@ -75,7 +75,12 @@ export default function TransactionDetails() {
           <div className="bg-muted px-4 py-2 rounded-lg text-center">
             <span className="block text-xs text-muted-foreground mb-1">الحالة</span>
             <Badge variant={tx.status === "active" ? "default" : "outline"} className="px-2">
-              {tx.status}
+              {tx.status === "pending" && "قيد الانتظار"}
+              {tx.status === "active" && "نشطة"}
+              {tx.status === "paid" && "تم الدفع"}
+              {tx.status === "completed" && "مكتملة"}
+              {tx.status === "closed" && "مغلقة"}
+              {tx.status === "cancelled" && "ملغية"}
             </Badge>
           </div>
           

@@ -61,7 +61,14 @@ export default function Broker() {
                     <Link href={`/dashboard/transaction/${t.id}`} className="text-xl font-bold hover:text-primary transition-colors">
                       {t.title}
                     </Link>
-                    <Badge variant={t.status === "active" ? "default" : "outline"}>{t.status}</Badge>
+                    <Badge variant={t.status === "active" ? "default" : "outline"}>
+                      {t.status === "pending" && "قيد الانتظار"}
+                      {t.status === "active" && "نشطة"}
+                      {t.status === "paid" && "تم الدفع"}
+                      {t.status === "completed" && "مكتملة"}
+                      {t.status === "closed" && "مغلقة"}
+                      {t.status === "cancelled" && "ملغية"}
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{t.description}</p>
                   <div className="mt-4 text-sm font-bold bg-muted/50 inline-block px-3 py-1 rounded-md">

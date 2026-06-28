@@ -64,9 +64,13 @@ export default function Register() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="كود" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="+966">SA +966</SelectItem>
-                        <SelectItem value="+971">AE +971</SelectItem>
-                        <SelectItem value="+965">KW +965</SelectItem>
+                        <SelectItem value="+966">السعودية +966</SelectItem>
+                        <SelectItem value="+971">الإمارات +971</SelectItem>
+                        <SelectItem value="+965">الكويت +965</SelectItem>
+                        <SelectItem value="+973">البحرين +973</SelectItem>
+                        <SelectItem value="+974">قطر +974</SelectItem>
+                        <SelectItem value="+968">عُمان +968</SelectItem>
+                        <SelectItem value="+20">مصر +20</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
