@@ -67,8 +67,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1">
-        {children}
+      <main className="flex-1 flex flex-col items-center w-full">
+        <div className="w-full flex flex-col items-center">
+          {children}
+        </div>
       </main>
 
       <footer className="border-t py-8 mt-auto bg-muted/30">
