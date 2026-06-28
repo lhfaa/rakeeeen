@@ -189,13 +189,22 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
+    const id = parseInt(req.params.id);
+    const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+    if (!tx) {
+      res.status(404).json({ error: "المعاملة غير موجودة" });
+      return;
+    }
+
     const [caller] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
-    if (!caller || (caller.role !== "admin" && caller.role !== "broker")) {
+    const isBuyer = tx.buyerId === req.session.userId;
+    const isPrivileged = caller?.role === "admin" || caller?.role === "broker";
+
+    if (!isBuyer && !isPrivileged) {
       res.status(403).json({ error: "ممنوع" });
       return;
     }
 
-    const id = parseInt(req.params.id);
     await db.delete(messagesTable).where(eq(messagesTable.transactionId, id));
     await db.delete(transactionsTable).where(eq(transactionsTable.id, id));
 
