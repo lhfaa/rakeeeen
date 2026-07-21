@@ -340,6 +340,20 @@ export const GetWalletResponse = zod.object({
 
 
 /**
+ * @summary Broker transfers money to any user by email
+ */
+export const BrokerTransferBody = zod.object({
+  "email": zod.string(),
+  "amount": zod.number()
+})
+
+export const BrokerTransferResponse = zod.object({
+  "recipientName": zod.string(),
+  "newBalance": zod.number()
+})
+
+
+/**
  * @summary Withdraw from wallet
  */
 export const WithdrawWalletBody = zod.object({

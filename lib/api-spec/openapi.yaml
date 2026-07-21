@@ -350,6 +350,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/WalletBalance"
 
+  /wallet/broker-transfer:
+    post:
+      operationId: brokerTransfer
+      tags: [users]
+      summary: Broker transfers money to any user by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrokerTransferInput"
+      responses:
+        "200":
+          description: Transfer done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokerTransferResult"
+
   /wallet/withdraw:
     post:
       operationId: withdrawWallet
@@ -601,6 +620,24 @@ components:
       properties:
         content:
           type: string
+
+    BrokerTransferInput:
+      type: object
+      required: [email, amount]
+      properties:
+        email:
+          type: string
+        amount:
+          type: number
+
+    BrokerTransferResult:
+      type: object
+      required: [recipientName, newBalance]
+      properties:
+        recipientName:
+          type: string
+        newBalance:
+          type: number
 
     WalletBalance:
       type: object

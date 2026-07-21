@@ -23,6 +23,8 @@ import type {
   AuthResponse,
   Broker,
   BrokerInput,
+  BrokerTransferInput,
+  BrokerTransferResult,
   ErrorResponse,
   HealthStatus,
   LoginInput,
@@ -1380,6 +1382,76 @@ export function useGetWallet<TData = Awaited<ReturnType<typeof getWallet>>, TErr
 
 
 
+
+export const getBrokerTransferUrl = () => {
+
+
+
+
+  return `/api/wallet/broker-transfer`
+}
+
+/**
+ * @summary Broker transfers money to any user by email
+ */
+export const brokerTransfer = async (brokerTransferInput: BrokerTransferInput, options?: RequestInit): Promise<BrokerTransferResult> => {
+
+  return customFetch<BrokerTransferResult>(getBrokerTransferUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(brokerTransferInput)
+  }
+);}
+
+
+
+
+export const getBrokerTransferMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof brokerTransfer>>, TError,{data: BodyType<BrokerTransferInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof brokerTransfer>>, TError,{data: BodyType<BrokerTransferInput>}, TContext> => {
+
+const mutationKey = ['brokerTransfer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof brokerTransfer>>, {data: BodyType<BrokerTransferInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  brokerTransfer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BrokerTransferMutationResult = NonNullable<Awaited<ReturnType<typeof brokerTransfer>>>
+    export type BrokerTransferMutationBody = BodyType<BrokerTransferInput>
+    export type BrokerTransferMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Broker transfers money to any user by email
+ */
+export const useBrokerTransfer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof brokerTransfer>>, TError,{data: BodyType<BrokerTransferInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof brokerTransfer>>,
+        TError,
+        {data: BodyType<BrokerTransferInput>},
+        TContext
+      > => {
+      return useMutation(getBrokerTransferMutationOptions(options));
+    }
 
 export const getWithdrawWalletUrl = () => {
 

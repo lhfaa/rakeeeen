@@ -137,6 +137,16 @@ export interface MessageInput {
   content: string;
 }
 
+export interface BrokerTransferInput {
+  email: string;
+  amount: number;
+}
+
+export interface BrokerTransferResult {
+  recipientName: string;
+  newBalance: number;
+}
+
 export interface WalletBalance {
   balance: number;
 }
