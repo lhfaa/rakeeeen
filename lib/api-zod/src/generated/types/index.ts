@@ -23,3 +23,5 @@ export * from './transactionInput';
 export * from './transactionStatus';
 export * from './user';
 export * from './userRole';
+export * from './walletBalance';
+export * from './withdrawInput';

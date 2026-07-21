@@ -137,6 +137,14 @@ export interface MessageInput {
   content: string;
 }
 
+export interface WalletBalance {
+  balance: number;
+}
+
+export interface WithdrawInput {
+  amount: number;
+}
+
 export interface PlatformStats {
   userCount: number;
   transactionCount: number;

@@ -318,6 +318,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/Transaction"
 
+  /transactions/{id}/transfer:
+    post:
+      operationId: transferToSeller
+      tags: [transactions]
+      summary: Broker transfers funds to seller
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transfer done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+  /wallet:
+    get:
+      operationId: getWallet
+      tags: [users]
+      summary: Get current user wallet balance
+      responses:
+        "200":
+          description: Wallet info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletBalance"
+
+  /wallet/withdraw:
+    post:
+      operationId: withdrawWallet
+      tags: [users]
+      summary: Withdraw from wallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawInput"
+      responses:
+        "200":
+          description: Withdraw done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletBalance"
+
   /transactions/{id}/messages:
     get:
       operationId: listMessages
@@ -550,6 +601,20 @@ components:
       properties:
         content:
           type: string
+
+    WalletBalance:
+      type: object
+      required: [balance]
+      properties:
+        balance:
+          type: number
+
+    WithdrawInput:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
 
     PlatformStats:
       type: object

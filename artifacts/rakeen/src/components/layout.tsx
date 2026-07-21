@@ -1,7 +1,7 @@
 import { useGetMe, useLogout } from "@workspace/api-client-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, LogOut, LayoutDashboard, User, ShieldAlert } from "lucide-react";
+import { ShieldCheck, LogOut, LayoutDashboard, User, ShieldAlert, Wallet } from "lucide-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetMe({ query: { retry: false } });
@@ -46,6 +46,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         بوابة الوسيط
                       </Link>
                     )}
+                    <Link href="/wallet" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                      <Wallet className="w-4 h-4" />
+                      محفظتي
+                    </Link>
                     <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center gap-2 text-destructive hover:text-destructive">
                       <LogOut className="w-4 h-4" />
                       تسجيل خروج

@@ -308,6 +308,50 @@ export const PayTransactionResponse = zod.object({
 
 
 /**
+ * @summary Broker transfers funds to seller
+ */
+export const TransferToSellerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const TransferToSellerResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "amount": zod.number(),
+  "type": zod.string(),
+  "status": zod.enum(['pending', 'active', 'paid', 'completed', 'closed', 'cancelled']),
+  "buyerId": zod.number(),
+  "sellerId": zod.number(),
+  "brokerId": zod.number(),
+  "buyerName": zod.string().nullish(),
+  "sellerName": zod.string().nullish(),
+  "brokerName": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Get current user wallet balance
+ */
+export const GetWalletResponse = zod.object({
+  "balance": zod.number()
+})
+
+
+/**
+ * @summary Withdraw from wallet
+ */
+export const WithdrawWalletBody = zod.object({
+  "amount": zod.number()
+})
+
+export const WithdrawWalletResponse = zod.object({
+  "balance": zod.number()
+})
+
+
+/**
  * @summary Get messages for a transaction
  */
 export const ListMessagesParams = zod.object({

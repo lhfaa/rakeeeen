@@ -14,6 +14,7 @@ export const usersTable = pgTable("users", {
   phone: text("phone").notNull(),
   countryCode: text("country_code").notNull(),
   role: roleEnum("role").notNull().default("user"),
+  walletBalance: numeric("wallet_balance", { precision: 14, scale: 2 }).notNull().default("0"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -13,6 +13,7 @@ import NewTransaction from "./pages/new-transaction";
 import TransactionDetails from "./pages/transaction-details";
 import Admin from "./pages/admin";
 import Broker from "./pages/broker";
+import Wallet from "./pages/wallet";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function Router() {
         <Route path="/dashboard/transaction/:id" component={TransactionDetails} />
         <Route path="/admin" component={Admin} />
         <Route path="/broker" component={Broker} />
+        <Route path="/wallet" component={Wallet} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

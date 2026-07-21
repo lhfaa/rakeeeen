@@ -1,4 +1,4 @@
-import { useGetTransaction, useListMessages, useSendMessage, usePayTransaction, useDeleteTransaction, useGetMe, getGetTransactionQueryKey, getListMessagesQueryKey } from "@workspace/api-client-react";
+import { useGetTransaction, useListMessages, useSendMessage, usePayTransaction, useDeleteTransaction, useTransferToSeller, useGetMe, getGetTransactionQueryKey, getListMessagesQueryKey } from "@workspace/api-client-react";
 import { useParams, useLocation } from "wouter";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { ShieldCheck, Send, AlertCircle, Trash2, CreditCard, ArrowRight } from "lucide-react";
+import { ShieldCheck, Send, AlertCircle, Trash2, CreditCard, ArrowRight, Banknote } from "lucide-react";
 import { Link } from "wouter";
 
 function statusLabel(status: string) {
@@ -31,6 +31,7 @@ export default function TransactionDetails() {
 
   const sendMessage = useSendMessage();
   const payTransaction = usePayTransaction();
+  const transferToSeller = useTransferToSeller();
   const deleteTransaction = useDeleteTransaction();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -63,6 +64,17 @@ export default function TransactionDetails() {
     }
   };
 
+  const handleTransfer = async () => {
+    if (!confirm("تأكيد تحويل المبلغ إلى محفظة البائع؟")) return;
+    try {
+      await transferToSeller.mutateAsync({ id: txId });
+      toast({ title: "تم التحويل بنجاح", description: "المبلغ أصبح في محفظة البائع" });
+      queryClient.invalidateQueries({ queryKey: getGetTransactionQueryKey(txId) });
+    } catch (e: any) {
+      toast({ title: "خطأ في التحويل", description: e.message || "حدث خطأ", variant: "destructive" });
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm("هل أنت متأكد من حذف هذه المعاملة؟ لا يمكن التراجع.")) return;
     try {
@@ -78,7 +90,10 @@ export default function TransactionDetails() {
   if (!tx) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">لم يتم العثور على المعاملة</div>;
 
   const isBuyer = user?.id === tx.buyerId;
+  const isSeller = user?.id === tx.sellerId;
+  const isBroker = user?.role === "broker" || user?.role === "admin";
   const canPay = isBuyer && (tx.status === "pending" || tx.status === "active");
+  const canTransfer = isBroker && tx.status === "paid";
   const canDelete = isBuyer || user?.role === "admin" || user?.role === "broker";
   const isClosed = tx.status === "closed" || tx.status === "cancelled";
 
@@ -131,6 +146,18 @@ export default function TransactionDetails() {
             >
               <CreditCard className="w-5 h-5" />
               {payTransaction.isPending ? "جاري الدفع..." : "دفع المبلغ"}
+            </Button>
+          )}
+
+          {canTransfer && (
+            <Button
+              onClick={handleTransfer}
+              disabled={transferToSeller.isPending}
+              size="lg"
+              className="h-[52px] gap-2 font-bold bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Banknote className="w-5 h-5" />
+              {transferToSeller.isPending ? "جاري التحويل..." : "تحويل للبائع"}
             </Button>
           )}
 
