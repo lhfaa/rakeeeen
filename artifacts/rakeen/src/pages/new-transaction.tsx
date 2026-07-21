@@ -1,4 +1,4 @@
-import { useCreateTransaction, useListBrokers, useGetMe } from "@workspace/api-client-react";
+import { useCreateTransaction, useGetMe } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 const schema = z.object({
@@ -16,19 +15,17 @@ const schema = z.object({
   amount: z.coerce.number().min(1, "المبلغ يجب أن يكون أكبر من 0"),
   type: z.string().min(2, "النوع مطلوب"),
   sellerEmail: z.string().email("البريد الإلكتروني غير صالح"),
-  brokerId: z.coerce.number().min(1, "اختر وسيط"),
 });
 
 export default function NewTransaction() {
   const { data: user } = useGetMe({ query: { retry: false } });
-  const { data: brokers } = useListBrokers();
   const createTx = useCreateTransaction();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { title: "", description: "", amount: 0, type: "", sellerEmail: "", brokerId: 0 },
+    defaultValues: { title: "", description: "", amount: 0, type: "", sellerEmail: "" },
   });
 
   if (!user) {
@@ -38,7 +35,7 @@ export default function NewTransaction() {
 
   async function onSubmit(data: z.infer<typeof schema>) {
     try {
-      await createTx.mutateAsync({ data });
+      await createTx.mutateAsync({ data: { ...data, brokerId: 1 } });
       toast({ title: "تم إنشاء المعاملة بنجاح" });
       setLocation("/dashboard");
     } catch (e: any) {
@@ -48,7 +45,8 @@ export default function NewTransaction() {
 
   return (
     <div className="container max-w-2xl py-12">
-      <h1 className="text-3xl font-bold mb-8">إنشاء معاملة جديدة</h1>
+      <h1 className="text-3xl font-bold mb-2">إنشاء معاملة جديدة</h1>
+      <p className="text-muted-foreground mb-8">سيتم تعيين وسيطك تلقائياً: <span className="font-semibold text-foreground">احمد الشهراني</span></p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField control={form.control} name="title" render={({ field }) => (
@@ -67,20 +65,6 @@ export default function NewTransaction() {
           </div>
           <FormField control={form.control} name="sellerEmail" render={({ field }) => (
             <FormItem><FormLabel>البريد الإلكتروني للطرف الآخر</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
-          )} />
-          <FormField control={form.control} name="brokerId" render={({ field }) => (
-            <FormItem>
-              <FormLabel>اختر وسيط</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value ? String(field.value) : ""}>
-                <FormControl><SelectTrigger><SelectValue placeholder="اختر وسيطاً" /></SelectTrigger></FormControl>
-                <SelectContent>
-                  {brokers?.map(b => (
-                    <SelectItem key={b.id} value={String(b.id)}>{b.username} - تقييم: {b.rating}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
           )} />
           <Button type="submit" className="w-full" disabled={createTx.isPending}>
             {createTx.isPending ? "جاري الإنشاء..." : "تأكيد وإنشاء"}

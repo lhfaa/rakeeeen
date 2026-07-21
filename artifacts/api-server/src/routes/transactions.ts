@@ -110,9 +110,9 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const { title, description, amount, type, brokerId, sellerEmail } = req.body;
+    const { title, description, amount, type, sellerEmail } = req.body;
 
-    if (!title || !description || !amount || !type || !brokerId || !sellerEmail) {
+    if (!title || !description || !amount || !type || !sellerEmail) {
       res.status(400).json({ error: "جميع الحقول مطلوبة" });
       return;
     }
@@ -123,7 +123,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const [brokerRow] = await db.select().from(brokersTable).where(eq(brokersTable.id, parseInt(brokerId))).limit(1);
+    const [brokerRow] = await db.select().from(brokersTable).where(eq(brokersTable.id, 1)).limit(1);
     if (!brokerRow) {
       res.status(400).json({ error: "الوسيط غير موجود" });
       return;
