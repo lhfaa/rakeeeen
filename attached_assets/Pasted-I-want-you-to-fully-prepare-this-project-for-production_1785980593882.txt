@@ -1,0 +1,109 @@
+I want you to fully prepare this project for production deployment without changing the UI, design, colors, layout, typography, spacing, animations, or user experience.
+
+IMPORTANT:
+- Do NOT redesign anything.
+- Do NOT remove any existing features.
+- Do NOT change the visual appearance.
+- Only fix bugs, deployment issues, backend issues, database integration, security, and production configuration.
+
+Tasks:
+
+1. Fix every TypeScript, Vite, Node.js, Express, React, and pnpm workspace error.
+2. Continue fixing until BOTH commands complete successfully:
+   - pnpm run typecheck
+   - pnpm run build
+3. Fix all production build errors.
+4. Verify the entire project works correctly.
+
+BACKEND
+
+- Audit the Express server.
+- Ensure it listens on process.env.PORT.
+- Serve the production frontend correctly.
+- Keep API routes under /api.
+- Make SPA routing work.
+- Add production error handling.
+- Improve security headers where appropriate.
+- Validate all request parameters safely.
+- Keep all existing functionality.
+
+DATABASE
+
+- Audit the existing database implementation.
+- Fix schema, migrations, and queries if needed.
+- Ensure the project works correctly with the existing database.
+- Move all secrets to environment variables.
+- Verify database connections.
+
+AUTHENTICATION
+
+- Audit the existing authentication.
+- Fix login, registration, sessions, cookies, password hashing, and authorization.
+- Ensure authentication is production-ready.
+- Preserve existing user accounts if possible.
+
+ADMIN PANEL
+
+If an admin system already exists:
+- Audit it.
+- Fix bugs.
+- Improve security.
+- Ensure it works correctly.
+
+If it does NOT exist:
+- Create a production-ready admin dashboard without changing the website design.
+- Add role-based permissions.
+- Add an Administrator role.
+- Allow the Administrator to manage:
+  - users
+  - brokers
+  - transactions
+  - deposits
+  - withdrawals
+  - settings
+  - reports
+- The Administrator should also be able to act as a broker when required.
+
+SECURITY
+
+- Fix security issues.
+- Validate inputs.
+- Protect API endpoints.
+- Prevent common vulnerabilities.
+- Keep all existing functionality.
+
+DEPLOYMENT
+
+Prepare everything for Render production deployment.
+
+Generate every required production file.
+
+Make sure the application works correctly after deployment.
+
+Do NOT stop until all deployment problems are solved.
+
+NAMECHEAP DOMAIN
+
+After everything is finished, provide COMPLETE deployment instructions.
+
+Include:
+
+1. Exact Build Command.
+2. Exact Start Command.
+3. Required Environment Variables.
+4. Database Environment Variables.
+5. Every DNS record required in Namecheap.
+6. How to connect the custom domain:
+   rakeen.online
+7. How to configure Render.
+8. How to configure Namecheap.
+9. How to enable HTTPS.
+10. How to test the deployment.
+11. Explain every step in detail.
+12. List every modified file and explain why it was changed.
+
+Before finishing:
+- Run pnpm run typecheck.
+- Run pnpm run build.
+- Confirm both complete successfully.
+- Confirm the project is production-ready.
