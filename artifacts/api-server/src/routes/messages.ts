@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { db, usersTable, messagesTable, transactionsTable } from "@workspace/db";
 import { eq, asc, or } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { getRouteParam } from "../lib/route-params";
 
 const router = Router({ mergeParams: true });
 
@@ -12,7 +13,7 @@ router.get("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const txId = parseInt(req.params.id);
+    const txId = parseInt(getRouteParam(req.params.id) ?? "", 10);
 
     const messages = await db
       .select({
@@ -55,7 +56,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const txId = parseInt(req.params.id);
+    const txId = parseInt(getRouteParam(req.params.id) ?? "", 10);
     const { content } = req.body;
 
     if (!content || !content.trim()) {

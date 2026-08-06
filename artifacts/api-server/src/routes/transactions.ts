@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { db, usersTable, transactionsTable, messagesTable, brokersTable } from "@workspace/db";
 import { eq, or, desc } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { getRouteParam } from "../lib/route-params";
 
 const router = Router();
 
@@ -167,7 +168,7 @@ router.get("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(req.params.id);
+    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
     const result = await getTransactionWithNames(id);
 
     if (!result) {
@@ -189,7 +190,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(req.params.id);
+    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
     const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
     if (!tx) {
       res.status(404).json({ error: "المعاملة غير موجودة" });
@@ -228,7 +229,7 @@ router.patch("/:id/close", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(req.params.id);
+    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
     await db.update(transactionsTable).set({ status: "closed" }).where(eq(transactionsTable.id, id));
 
     await db.insert(messagesTable).values({
@@ -253,7 +254,7 @@ router.post("/:id/pay", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(req.params.id);
+    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
     const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
 
     if (!tx) {

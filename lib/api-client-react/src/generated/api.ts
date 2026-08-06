@@ -15,7 +15,7 @@ import type {
   QueryKey,
   UseMutationOptions,
   UseMutationResult,
-  UseQueryOptions,
+  UseQueryOptions as TanstackUseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
@@ -49,6 +49,13 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+type UseQueryOptions<TQueryFnData, TError, TData> = Omit<
+  TanstackUseQueryOptions<TQueryFnData, TError, TData>,
+  "queryKey"
+> & {
+  queryKey?: QueryKey;
+};
 
 
 

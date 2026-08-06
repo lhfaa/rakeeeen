@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { db, usersTable, brokersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { getRouteParam } from "../lib/route-params";
 
 const router = Router();
 
@@ -141,7 +142,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const brokerId = parseInt(req.params.id);
+    const brokerId = parseInt(getRouteParam(req.params.id) ?? "", 10);
     const [broker] = await db
       .select()
       .from(brokersTable)
