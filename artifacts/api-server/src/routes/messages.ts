@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 import { db, usersTable, messagesTable, transactionsTable } from "@workspace/db";
 import { eq, asc, or } from "drizzle-orm";
 import { logger } from "../lib/logger";
-import { getRouteParam } from "../lib/route-params";
+import { getPositiveRouteId } from "../lib/route-params";
+import { readString } from "../lib/validation";
 
 const router = Router({ mergeParams: true });
 
@@ -13,7 +14,22 @@ router.get("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const txId = parseInt(getRouteParam(req.params.id) ?? "", 10);
+    const txId = getPositiveRouteId(req.params.id);
+    if (!txId) {
+      res.status(400).json({ error: "معرف المعاملة غير صالح" });
+      return;
+    }
+
+    const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, txId)).limit(1);
+    if (!tx) {
+      res.status(404).json({ error: "المعاملة غير موجودة" });
+      return;
+    }
+    const [caller] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    if (!caller || (caller.role !== "admin" && tx.buyerId !== caller.id && tx.sellerId !== caller.id && tx.brokerId !== caller.id)) {
+      res.status(403).json({ error: "غير مصرح للمشاركة في هذه المعاملة" });
+      return;
+    }
 
     const messages = await db
       .select({
@@ -56,10 +72,14 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const txId = parseInt(getRouteParam(req.params.id) ?? "", 10);
-    const { content } = req.body;
+    const txId = getPositiveRouteId(req.params.id);
+    const content = readString(req.body?.content, { min: 1, max: 5000 });
 
-    if (!content || !content.trim()) {
+    if (!txId || !content) {
+      if (!txId) {
+        res.status(400).json({ error: "معرف المعاملة غير صالح" });
+        return;
+      }
       res.status(400).json({ error: "الرسالة لا يمكن أن تكون فارغة" });
       return;
     }
@@ -86,7 +106,7 @@ router.post("/", async (req: Request, res: Response) => {
       .values({
         transactionId: txId,
         senderId: userId,
-        content: content.trim(),
+        content,
         messageType: "text",
       })
       .returning();

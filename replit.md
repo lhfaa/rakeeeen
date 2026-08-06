@@ -28,17 +28,11 @@
 - `artifacts/api-server/src/routes/` — مسارات API
 - `artifacts/rakeen/src/` — كود الواجهة الأمامية
 
-## Admin Account
+## Accounts
 
-- **البريد:** admin@rakeen.sa
-- **كلمة المرور:** Admin@123 (bcrypt-hashed in DB — change in production)
-- **الدور:** admin
-
-## Sample Brokers
-
-- ahmed.broker@rakeen.sa (وسيط_احمد) — password: Admin@123
-- salma.broker@rakeen.sa (وسيط_سلمى) — password: Admin@123
-- mohammed.broker@rakeen.sa (وسيط_محمد) — password: Admin@123
+- Do not store development or production passwords in this file.
+- Create the first administrator through a controlled database seed or a
+  one-time administrative process, then rotate that password before launch.
 
 ## Architecture decisions
 
@@ -66,8 +60,7 @@
 ## Gotchas
 
 - SESSION_SECRET متوفر في environment secrets
-- الـ bcrypt hash في قاعدة البيانات للحسابات التجريبية هو لكلمة "Admin@123"
-- لتغيير كلمة مرور الأدمن: UPDATE users SET password_hash = ... WHERE email = 'admin@rakeen.sa'
+- لا تحفظ كلمات المرور أو قيم الأسرار في المستودع.
 
 ## Pointers
 

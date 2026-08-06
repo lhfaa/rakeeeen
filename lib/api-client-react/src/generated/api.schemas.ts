@@ -21,7 +21,7 @@ export interface RegisterInput {
   /** @minLength 3 */
   username: string;
   email: string;
-  /** @minLength 6 */
+  /** @minLength 8 */
   password: string;
   phone: string;
   countryCode: string;

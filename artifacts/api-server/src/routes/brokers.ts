@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { db, usersTable, brokersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
-import { getRouteParam } from "../lib/route-params";
+import { getPositiveRouteId } from "../lib/route-params";
 
 const router = Router();
 
@@ -62,8 +62,12 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const { userId } = req.body;
-    if (!userId) {
+    const userId = Number.isSafeInteger(req.body?.userId)
+      ? req.body.userId
+      : typeof req.body?.userId === "string" && /^[1-9]\d*$/.test(req.body.userId)
+        ? Number(req.body.userId)
+        : null;
+    if (!userId || userId <= 0) {
       res.status(400).json({ error: "معرف المستخدم مطلوب" });
       return;
     }
@@ -71,7 +75,7 @@ router.post("/", async (req: Request, res: Response) => {
     const [targetUser] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, parseInt(userId)))
+      .where(eq(usersTable.id, userId))
       .limit(1);
 
     if (!targetUser) {
@@ -79,14 +83,26 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    await db
-      .update(usersTable)
-      .set({ role: "broker" })
-      .where(eq(usersTable.id, parseInt(userId)));
+    const [existingBroker] = await db
+      .select()
+      .from(brokersTable)
+      .where(eq(brokersTable.userId, userId))
+      .limit(1);
+    if (existingBroker) {
+      res.status(409).json({ error: "المستخدم وسيط بالفعل" });
+      return;
+    }
+
+    if (targetUser.role !== "admin") {
+      await db
+        .update(usersTable)
+        .set({ role: "broker" })
+        .where(eq(usersTable.id, userId));
+    }
 
     const [broker] = await db
       .insert(brokersTable)
-      .values({ userId: parseInt(userId) })
+      .values({ userId })
       .returning();
 
     const [brokerRow] = await db
@@ -142,7 +158,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const brokerId = parseInt(getRouteParam(req.params.id) ?? "", 10);
+    const brokerId = getPositiveRouteId(req.params.id);
+    if (!brokerId) {
+      res.status(400).json({ error: "معرف الوسيط غير صالح" });
+      return;
+    }
     const [broker] = await db
       .select()
       .from(brokersTable)
@@ -154,7 +174,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    await db.update(usersTable).set({ role: "user" }).where(eq(usersTable.id, broker.userId));
+    const [brokerUser] = await db.select().from(usersTable).where(eq(usersTable.id, broker.userId)).limit(1);
+    if (brokerUser?.role === "broker") {
+      await db.update(usersTable).set({ role: "user" }).where(eq(usersTable.id, broker.userId));
+    }
     await db.delete(brokersTable).where(eq(brokersTable.id, brokerId));
 
     res.json({ success: true });

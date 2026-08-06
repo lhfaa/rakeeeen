@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { db, usersTable, brokersTable } from "@workspace/db";
+import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import { readEmail, readString } from "../lib/validation";
 
 declare module "express-session" {
   interface SessionData {
@@ -12,9 +13,25 @@ declare module "express-session" {
 
 const router = Router();
 
+function publicUser(user: typeof usersTable.$inferSelect) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+    countryCode: user.countryCode,
+    role: user.role,
+    createdAt: user.createdAt.toISOString(),
+  };
+}
+
 router.post("/register", async (req: Request, res: Response) => {
   try {
-    const { username, email, password, phone, countryCode } = req.body;
+    const username = readString(req.body?.username, { min: 3, max: 80 });
+    const email = readEmail(req.body?.email);
+    const password = readString(req.body?.password, { min: 8, max: 128 });
+    const phone = readString(req.body?.phone, { min: 5, max: 32 });
+    const countryCode = readString(req.body?.countryCode, { min: 2, max: 8 });
 
     if (!username || !email || !password || !phone || !countryCode) {
       res.status(400).json({ error: "جميع الحقول مطلوبة" });
@@ -57,18 +74,14 @@ router.post("/register", async (req: Request, res: Response) => {
       })
       .returning();
 
-    req.session.userId = user.id;
-
-    res.status(201).json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-        countryCode: user.countryCode,
-        role: user.role,
-        createdAt: user.createdAt.toISOString(),
-      },
+    req.session.regenerate((error) => {
+      if (error) {
+        logger.error({ err: error }, "Register session error");
+        res.status(500).json({ error: "حدث خطأ في الخادم" });
+        return;
+      }
+      req.session.userId = user.id;
+      res.status(201).json({ user: publicUser(user) });
     });
   } catch (err) {
     logger.error(err, "Register error");
@@ -78,7 +91,8 @@ router.post("/register", async (req: Request, res: Response) => {
 
 router.post("/login", async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const email = readEmail(req.body?.email);
+    const password = readString(req.body?.password, { min: 1, max: 128 });
 
     if (!email || !password) {
       res.status(400).json({ error: "البريد الإلكتروني وكلمة المرور مطلوبان" });
@@ -102,18 +116,14 @@ router.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    req.session.userId = user.id;
-
-    res.json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-        countryCode: user.countryCode,
-        role: user.role,
-        createdAt: user.createdAt.toISOString(),
-      },
+    req.session.regenerate((error) => {
+      if (error) {
+        logger.error({ err: error }, "Login session error");
+        res.status(500).json({ error: "حدث خطأ في الخادم" });
+        return;
+      }
+      req.session.userId = user.id;
+      res.json({ user: publicUser(user) });
     });
   } catch (err) {
     logger.error(err, "Login error");
@@ -122,7 +132,12 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 router.post("/logout", (req: Request, res: Response) => {
-  req.session.destroy(() => {
+  req.session.destroy((error) => {
+    if (error) {
+      logger.error({ err: error }, "Logout error");
+      res.status(500).json({ error: "حدث خطأ في الخادم" });
+      return;
+    }
     res.json({ success: true });
   });
 });
@@ -145,15 +160,7 @@ router.get("/me", async (req: Request, res: Response) => {
       return;
     }
 
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      phone: user.phone,
-      countryCode: user.countryCode,
-      role: user.role,
-      createdAt: user.createdAt.toISOString(),
-    });
+    res.json(publicUser(user));
   } catch (err) {
     logger.error(err, "Get me error");
     res.status(500).json({ error: "حدث خطأ في الخادم" });

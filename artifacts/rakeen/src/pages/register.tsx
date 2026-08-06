@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const schema = z.object({
   username: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
   email: z.string().email("البريد الإلكتروني غير صالح"),
-  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   phone: z.string().min(8, "رقم الجوال قصير جداً"),
   countryCode: z.string().min(1, "اختر كود الدولة"),
 });

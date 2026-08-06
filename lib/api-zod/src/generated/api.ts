@@ -21,7 +21,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const registerBodyUsernameMin = 3;
 
-export const registerBodyPasswordMin = 6;
+export const registerBodyPasswordMin = 8;
 
 
 

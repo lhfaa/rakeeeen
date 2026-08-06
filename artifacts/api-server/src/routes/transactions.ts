@@ -1,8 +1,9 @@
 import { Router, Request, Response } from "express";
 import { db, usersTable, transactionsTable, messagesTable, brokersTable } from "@workspace/db";
-import { eq, or, desc } from "drizzle-orm";
+import { eq, or, desc, and, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
-import { getRouteParam } from "../lib/route-params";
+import { getPositiveRouteId } from "../lib/route-params";
+import { readEmail, readPositiveAmount, readPositiveInt, readString } from "../lib/validation";
 
 const router = Router();
 
@@ -111,9 +112,14 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    const { title, description, amount, type, sellerEmail } = req.body;
+    const title = readString(req.body?.title, { min: 3, max: 200 });
+    const description = readString(req.body?.description, { min: 10, max: 10000 });
+    const amount = readPositiveAmount(req.body?.amount);
+    const type = readString(req.body?.type, { min: 2, max: 100 });
+    const sellerEmail = readEmail(req.body?.sellerEmail);
+    const brokerId = readPositiveInt(req.body?.brokerId);
 
-    if (!title || !description || !amount || !type || !sellerEmail) {
+    if (!title || !description || amount === null || !type || !sellerEmail || !brokerId) {
       res.status(400).json({ error: "جميع الحقول مطلوبة" });
       return;
     }
@@ -123,8 +129,12 @@ router.post("/", async (req: Request, res: Response) => {
       res.status(400).json({ error: "البائع غير موجود بهذا البريد الإلكتروني" });
       return;
     }
+    if (seller.id === req.session.userId) {
+      res.status(400).json({ error: "لا يمكن إنشاء معاملة مع نفسك" });
+      return;
+    }
 
-    const [brokerRow] = await db.select().from(brokersTable).where(eq(brokersTable.id, 1)).limit(1);
+    const [brokerRow] = await db.select().from(brokersTable).where(eq(brokersTable.id, brokerId)).limit(1);
     if (!brokerRow) {
       res.status(400).json({ error: "الوسيط غير موجود" });
       return;
@@ -135,7 +145,7 @@ router.post("/", async (req: Request, res: Response) => {
       .values({
         title,
         description,
-        amount: amount.toString(),
+         amount: amount.toFixed(2),
         type,
         status: "active",
         buyerId: req.session.userId,
@@ -147,7 +157,7 @@ router.post("/", async (req: Request, res: Response) => {
     await db.insert(messagesTable).values({
       transactionId: tx.id,
       senderId: req.session.userId,
-      content: `تم إنشاء المعاملة "${title}" بقيمة ${amount} ريال`,
+       content: `تم إنشاء المعاملة "${title}" بقيمة ${amount} ريال`,
       messageType: "system",
     });
 
@@ -168,13 +178,27 @@ router.get("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
-    const result = await getTransactionWithNames(id);
-
-    if (!result) {
+    const id = getPositiveRouteId(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: "معرف المعاملة غير صالح" });
+      return;
+    }
+    const [caller] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+    if (!tx) {
       res.status(404).json({ error: "المعاملة غير موجودة" });
       return;
     }
+    if (
+      caller?.role !== "admin" &&
+      tx.buyerId !== req.session.userId &&
+      tx.sellerId !== req.session.userId &&
+      tx.brokerId !== req.session.userId
+    ) {
+      res.status(403).json({ error: "ممنوع" });
+      return;
+    }
+    const result = await getTransactionWithNames(id);
 
     res.json(result);
   } catch (err) {
@@ -190,7 +214,11 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
+    const id = getPositiveRouteId(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: "معرف المعاملة غير صالح" });
+      return;
+    }
     const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
     if (!tx) {
       res.status(404).json({ error: "المعاملة غير موجودة" });
@@ -199,7 +227,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
     const [caller] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
     const isBuyer = tx.buyerId === req.session.userId;
-    const isPrivileged = caller?.role === "admin" || caller?.role === "broker";
+    const isPrivileged =
+      caller?.role === "admin" ||
+      (caller?.role === "broker" && tx.brokerId === req.session.userId);
 
     if (!isBuyer && !isPrivileged) {
       res.status(403).json({ error: "ممنوع" });
@@ -229,7 +259,24 @@ router.patch("/:id/close", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
+    const id = getPositiveRouteId(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: "معرف المعاملة غير صالح" });
+      return;
+    }
+    const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+    if (!tx) {
+      res.status(404).json({ error: "المعاملة غير موجودة" });
+      return;
+    }
+    if (caller.role !== "admin" && tx.brokerId !== caller.id) {
+      res.status(403).json({ error: "هذا الوسيط غير مكلّف بهذه المعاملة" });
+      return;
+    }
+    if (tx.status === "closed" || tx.status === "cancelled" || tx.status === "completed") {
+      res.status(400).json({ error: "لا يمكن إغلاق المعاملة في حالتها الحالية" });
+      return;
+    }
     await db.update(transactionsTable).set({ status: "closed" }).where(eq(transactionsTable.id, id));
 
     await db.insert(messagesTable).values({
@@ -254,7 +301,11 @@ router.post("/:id/pay", async (req: Request, res: Response) => {
       return;
     }
 
-    const id = parseInt(getRouteParam(req.params.id) ?? "", 10);
+    const id = getPositiveRouteId(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: "معرف المعاملة غير صالح" });
+      return;
+    }
     const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
 
     if (!tx) {
@@ -264,6 +315,10 @@ router.post("/:id/pay", async (req: Request, res: Response) => {
 
     if (tx.buyerId !== req.session.userId) {
       res.status(403).json({ error: "فقط المشتري يمكنه الدفع" });
+      return;
+    }
+    if (tx.status !== "pending" && tx.status !== "active") {
+      res.status(400).json({ error: "لا يمكن دفع المعاملة في حالتها الحالية" });
       return;
     }
 
@@ -280,6 +335,64 @@ router.post("/:id/pay", async (req: Request, res: Response) => {
     res.json(result);
   } catch (err) {
     logger.error(err, "Pay transaction error");
+    res.status(500).json({ error: "حدث خطأ في الخادم" });
+  }
+});
+
+router.post("/:id/transfer", async (req: Request, res: Response) => {
+  try {
+    if (!req.session.userId) {
+      res.status(401).json({ error: "غير مصرح" });
+      return;
+    }
+
+    const id = getPositiveRouteId(req.params.id);
+    if (!id) {
+      res.status(400).json({ error: "معرف المعاملة غير صالح" });
+      return;
+    }
+
+    const [caller] = await db.select().from(usersTable).where(eq(usersTable.id, req.session.userId)).limit(1);
+    if (!caller || (caller.role !== "admin" && caller.role !== "broker")) {
+      res.status(403).json({ error: "ممنوع" });
+      return;
+    }
+
+    const [tx] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id)).limit(1);
+    if (!tx) {
+      res.status(404).json({ error: "المعاملة غير موجودة" });
+      return;
+    }
+    if (caller.role !== "admin" && tx.brokerId !== caller.id) {
+      res.status(403).json({ error: "هذا الوسيط غير مكلّف بهذه المعاملة" });
+      return;
+    }
+    if (tx.status !== "paid") {
+      res.status(400).json({ error: "يجب دفع المعاملة قبل تحويل المبلغ" });
+      return;
+    }
+
+    await db.transaction(async (transaction) => {
+      await transaction
+        .update(usersTable)
+        .set({ walletBalance: sql`wallet_balance + ${tx.amount}` })
+        .where(eq(usersTable.id, tx.sellerId));
+      await transaction
+        .update(transactionsTable)
+        .set({ status: "completed" })
+        .where(and(eq(transactionsTable.id, id), eq(transactionsTable.status, "paid")));
+      await transaction.insert(messagesTable).values({
+        transactionId: id,
+        senderId: req.session.userId!,
+        content: `تم تحويل مبلغ ${parseFloat(tx.amount)} ريال إلى محفظة البائع`,
+        messageType: "payment",
+      });
+    });
+
+    const result = await getTransactionWithNames(id);
+    res.json(result);
+  } catch (err) {
+    logger.error(err, "Transfer to seller error");
     res.status(500).json({ error: "حدث خطأ في الخادم" });
   }
 });
